@@ -67,6 +67,15 @@ object MovieLensALS {
     math.sqrt(predictionsAndRatings.map(x => (x._1 - x._2) * (x._1 - x._2)).reduce(_ + _) / n)
   }
 
+  /** Compute MAE (Mean Absolute Error). */
+  def computeMAE(model: MatrixFactorizationModel, data: RDD[Rating], n: Long) = {
+    val predictions: RDD[Rating] = model.predict(data.map(x => (x.user, x.product)))
+    val predictionsAndRatings = predictions.map(x => ((x.user, x.product), x.rating))
+      .join(data.map(x => ((x.user, x.product), x.rating)))
+      .values
+    predictionsAndRatings.map(x => math.abs((x._1 - x._2))).reduce(_ + _) / n
+  }
+  
   /** Load ratings from file. */
   def loadRatings(path: String): Seq[Rating] = {
     val lines = Source.fromFile(path).getLines()
